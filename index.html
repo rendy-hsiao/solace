@@ -3,7 +3,23 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Solace</title>
-<style>
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const sb = supabase.createClient(
+  'https://vwubdcjizbokjiaugyba.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3dWJkY2ppemJva2ppYXVneWJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyOTUyNDIsImV4cCI6MjA5NTg3MTI0Mn0.hQ8j4vU5s9qpi3t4_TzKD4TojzqoKagJY-HGYhbhXGQ'
+);
+
+async function logMood(moodState) {
+  const { error } = await sb.from('mood_logs').insert({
+    mood_state: moodState,
+    note: null
+  });
+  if(error) console.error('Mood log failed:', error);
+}
+</script>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;700;800&family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Caveat:wght@400;700&family=Patrick+Hand&family=Kalam:wght@700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#06090f;font-family:'Nunito',system-ui,sans-serif;color:#e8edf5;overflow-x:hidden}
@@ -1282,6 +1298,12 @@ MOODS.forEach(function(m,i){
   mascots.push({c:c,ctx:c.getContext('2d'),t:i*2.2+Math.random()*1.5,m:m,btn:btn});
 });
 function pickMood(i){
+  mascots.forEach(function(mc,j){mc.btn.classList.toggle('sel',j===i);});
+  var mr=$('mr');mr.style.opacity=0;
+  setTimeout(function(){mr.textContent=MOODS[i].msg;mr.classList.add('show');},200);
+  drop(W*(.3+Math.random()*.4),H*(.3+Math.random()*.4),55);playDrop();
+  logMood(MOODS[i].key);
+}
   mascots.forEach(function(mc,j){mc.btn.classList.toggle('sel',j===i);});
   var mr=$('mr');mr.style.opacity=0;
   setTimeout(function(){mr.textContent=MOODS[i].msg;mr.classList.add('show');},200);
