@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Solace</title>
-</style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -20,6 +19,7 @@ async function logMood(moodState) {
   if(error) console.error('Mood log failed:', error);
 }
 </script>
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;700;800&family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Caveat:wght@400;700&family=Patrick+Hand&family=Kalam:wght@700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#06090f;font-family:'Nunito',system-ui,sans-serif;color:#e8edf5;overflow-x:hidden}
@@ -682,6 +682,8 @@ body{background:#06090f;font-family:'Nunito',system-ui,sans-serif;color:#e8edf5;
 .walk-again{padding:11px 26px;border-radius:14px;background:rgba(122,173,122,.12);border:.5px solid rgba(122,173,122,.36);color:#9cc49c;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .28s}
 .walk-again:hover{background:rgba(122,173,122,.22)}
 </style>
+</head>
+<body>
 
 <!-- ══════════════ HOME ══════════════ -->
 <div id="home">
@@ -1707,4 +1709,5 @@ function joinWL(){var e=$('ei').value.trim();if(!e||!e.includes('@')){$('ei').st
 // ── INIT ──────────────────────────────────────────────────────────────────────
 initW();wloop();setTimeout(autoRipple,900);mainLoop();
 </script>
+</body>
 </html>
