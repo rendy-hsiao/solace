@@ -1358,7 +1358,7 @@ function pickMood(i){
   mascots.forEach(function(mc,j){mc.btn.classList.toggle('sel',j===i);});
   var mr=$('mr');mr.style.opacity=0;
   setTimeout(function(){mr.textContent=MOODS[i].msg;mr.classList.add('show');},200);
-  drop(W*(.3+Math.random()*.4),H*(.3+Math.random()*.4),55);
+  drop(W*(.3+Math.random()*.4),H*(.3+Math.random()*.4),55);playDrop();
   logMood(MOODS[i].key);
 }
 function mainLoop(){mascots.forEach(function(mc){mc.t+=.016;renderMascot(mc.ctx,SZ,SZ+8,mc.m,mc.t);});requestAnimationFrame(mainLoop);}
