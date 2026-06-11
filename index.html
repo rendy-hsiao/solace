@@ -1118,6 +1118,7 @@ function _hideSV(name,cb){
   setTimeout(function(){sv.style.display='none';sv.classList.remove('closing');if(cb)cb();},280);
 }
 function goSection(name){
+  playBtn();
   document.getElementById('home').classList.add('bg');
   if(currentSV&&currentSV!==name){
     _hideSV(currentSV);$(CARDS[currentSV]).classList.remove('active');
@@ -1131,6 +1132,7 @@ function goSection(name){
 }
 function goHome(){
   if(!currentSV)return;
+  playBtn();
   var leaving=currentSV;
   _hideSV(leaving);$(CARDS[leaving]).classList.remove('active');
   if(leaving==='br'){rstBreath();}
@@ -1139,6 +1141,7 @@ function goHome(){
   currentSV=null;coSub=null;document.getElementById('home').classList.remove('bg');
 }
 function goConnect(sub){
+  playBtn();
   coSub=sub;
   $('co-home').style.display='none';
   $('co-release').style.display='none';
@@ -1147,6 +1150,7 @@ function goConnect(sub){
   if(sub==='release')setTimeout(renderFanCards,60);
 }
 function backToCoHome(){
+  playBtn();
   coSub=null;
   $('co-release').style.display='none';
   $('co-walk').style.display='none';
@@ -1208,8 +1212,12 @@ function _loadBtn(){
     }).catch(function(){});
   }catch(e){}
 }
+var _btnLastT=0;
 function playBtn(){
   try{
+    var now2=Date.now();
+    if(now2-_btnLastT<200)return;
+    _btnLastT=now2;
     if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();
     if(dropACtx.state==='suspended')dropACtx.resume();
     _loadBtn();
