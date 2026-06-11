@@ -1118,7 +1118,6 @@ function _hideSV(name,cb){
   setTimeout(function(){sv.style.display='none';sv.classList.remove('closing');if(cb)cb();},280);
 }
 function goSection(name){
-  playBtn();
   document.getElementById('home').classList.add('bg');
   if(currentSV&&currentSV!==name){
     _hideSV(currentSV);$(CARDS[currentSV]).classList.remove('active');
@@ -1132,7 +1131,6 @@ function goSection(name){
 }
 function goHome(){
   if(!currentSV)return;
-  playBtn();
   var leaving=currentSV;
   _hideSV(leaving);$(CARDS[leaving]).classList.remove('active');
   if(leaving==='br'){rstBreath();}
@@ -1181,15 +1179,21 @@ function _loadDrop(){
     }).catch(function(){});
   }catch(e){}
 }
+var _dropLastT=0,_dropSrc=null;
 function playDrop(){
   try{
+    var now2=Date.now();
+    if(now2-_dropLastT<350)return; // throttle — only one drop at a time
+    _dropLastT=now2;
     if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();
     if(dropACtx.state==='suspended')dropACtx.resume();
     _loadDrop();
     if(_dropBuf){
+      if(_dropSrc){try{_dropSrc.stop();}catch(e){}} // stop any still-playing drop
       var src=dropACtx.createBufferSource(),g=dropACtx.createGain();
-      src.buffer=_dropBuf;g.gain.value=0.7;
-      src.connect(g);g.connect(dropACtx.destination);src.start();
+      src.buffer=_dropBuf;g.gain.value=0.65;
+      src.connect(g);g.connect(dropACtx.destination);
+      _dropSrc=src;src.start();
     }
   }catch(e){}
 }
