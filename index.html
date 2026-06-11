@@ -1118,7 +1118,6 @@ function _hideSV(name,cb){
   setTimeout(function(){sv.style.display='none';sv.classList.remove('closing');if(cb)cb();},280);
 }
 function goSection(name){
-  playBtn();
   document.getElementById('home').classList.add('bg');
   if(currentSV&&currentSV!==name){
     _hideSV(currentSV);$(CARDS[currentSV]).classList.remove('active');
@@ -1132,7 +1131,6 @@ function goSection(name){
 }
 function goHome(){
   if(!currentSV)return;
-  playBtn();
   var leaving=currentSV;
   _hideSV(leaving);$(CARDS[leaving]).classList.remove('active');
   if(leaving==='br'){rstBreath();}
@@ -1141,7 +1139,6 @@ function goHome(){
   currentSV=null;coSub=null;document.getElementById('home').classList.remove('bg');
 }
 function goConnect(sub){
-  playBtn();
   coSub=sub;
   $('co-home').style.display='none';
   $('co-release').style.display='none';
@@ -1150,7 +1147,6 @@ function goConnect(sub){
   if(sub==='release')setTimeout(renderFanCards,60);
 }
 function backToCoHome(){
-  playBtn();
   coSub=null;
   $('co-release').style.display='none';
   $('co-walk').style.display='none';
@@ -1362,7 +1358,7 @@ function pickMood(i){
   mascots.forEach(function(mc,j){mc.btn.classList.toggle('sel',j===i);});
   var mr=$('mr');mr.style.opacity=0;
   setTimeout(function(){mr.textContent=MOODS[i].msg;mr.classList.add('show');},200);
-  drop(W*(.3+Math.random()*.4),H*(.3+Math.random()*.4),55);playBtn();
+  drop(W*(.3+Math.random()*.4),H*(.3+Math.random()*.4),55);
   logMood(MOODS[i].key);
 }
 function mainLoop(){mascots.forEach(function(mc){mc.t+=.016;renderMascot(mc.ctx,SZ,SZ+8,mc.m,mc.t);});requestAnimationFrame(mainLoop);}
@@ -1760,8 +1756,22 @@ function resetWalk(){
 // ── WAITLIST ──────────────────────────────────────────────────────────────────
 function joinWL(){var e=$('ei').value.trim();if(!e||!e.includes('@')){$('ei').style.borderColor='rgba(200,100,100,.4)';return;}var b=document.querySelector('.ctabtn');b.textContent='your space is reserved ✓';b.style.borderColor='rgba(122,173,122,.5)';$('ei').value='';}
 
+// ── GLOBAL BUTTON SOUND (all buttons except mood row) ─────────────────────────
+document.addEventListener('click',function(e){
+  var t=e.target.closest('button,.acard,.co-feat-card');
+  if(!t)return;
+  if(t.closest('#mrow'))return; // mood buttons — silent
+  playBtn();
+},true);
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 initW();wloop();setTimeout(autoRipple,900);mainLoop();
+// Preload audio on first user gesture so files are ready immediately
+document.addEventListener('click',function preload(){
+  if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();
+  _loadDrop();_loadBtn();
+  document.removeEventListener('click',preload,true);
+},true);
 </script>
 </body>
 </html>
