@@ -1170,26 +1170,29 @@ function drop(x,y,str){var cx=Math.floor(x/W*cols),cy=Math.floor(y/H*rows),r=5;f
 function stepW(){for(var y=1;y<rows-1;y++)for(var x=1;x<cols-1;x++){var i=y*cols+x;curr[i]=(prev[(y-1)*cols+x]+prev[(y+1)*cols+x]+prev[y*cols+(x-1)]+prev[y*cols+(x+1)])/2-curr[i];curr[i]*=damp;}var t=prev;prev=curr;curr=t;}
 function renderW(){var id=wctx.createImageData(W,H),d=id.data,cw=W/cols,ch=H/rows;for(var py=0;py<H;py++)for(var px=0;px<W;px++){var i=(py*W+px)*4,t=py/H;d[i]=Math.floor(6+t*8);d[i+1]=Math.floor(9+t*16);d[i+2]=Math.floor(16+t*26);d[i+3]=255;}for(var y=1;y<rows-1;y++)for(var x=1;x<cols-1;x++){var h=prev[y*cols+x];if(Math.abs(h)<.008)continue;var nx2=prev[y*cols+(x+1)]-prev[y*cols+(x-1)],ny2=prev[(y+1)*cols+x]-prev[(y-1)*cols+x],sx=Math.floor(x*cw+nx2*16),sy=Math.floor(y*ch+ny2*16),px0=Math.floor(x*cw),py0=Math.floor(y*ch);if(sx<0||sx>=W||sy<0||sy>=H||px0<0||px0>=W||py0<0||py0>=H)continue;var si=(Math.min(Math.max(sy,0),H-1)*W+Math.min(Math.max(sx,0),W-1))*4,di=(py0*W+px0)*4,li=Math.max(0,Math.min(1,(h+60)/120)),sp=Math.pow(Math.max(0,nx2*.7+ny2*.7),2.5);d[di]=Math.min(255,d[si]+li*20+sp*80+h*.5);d[di+1]=Math.min(255,d[si+1]+li*35+sp*105+h*.7);d[di+2]=Math.min(255,d[si+2]+li*52+sp*135+h*1.0);d[di+3]=255;}wctx.putImageData(id,0,0);var vg=wctx.createRadialGradient(W/2,H/2,W*.18,W/2,H/2,W*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.52)');wctx.fillStyle=vg;wctx.fillRect(0,0,W,H);}
 function wloop(){stepW();renderW();requestAnimationFrame(wloop);}
-function playDrop(){try{if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();var ctx=dropACtx,now=ctx.currentTime;
-// Pure falling tone — like a single drop landing on still water, no noise
-var o=ctx.createOscillator(),g=ctx.createGain();
-o.type='sine';
-o.frequency.setValueAtTime(420,now);
-o.frequency.exponentialRampToValueAtTime(95,now+0.45);
-g.gain.setValueAtTime(0,now);
-g.gain.linearRampToValueAtTime(0.13,now+0.01);
-g.gain.exponentialRampToValueAtTime(0.001,now+0.45);
-o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.5);
-// Gentle sub undertone — the depth of water, fades before the main tone
-var o2=ctx.createOscillator(),g2=ctx.createGain();
-o2.type='sine';
-o2.frequency.setValueAtTime(180,now+0.01);
-o2.frequency.exponentialRampToValueAtTime(60,now+0.3);
-g2.gain.setValueAtTime(0,now);
-g2.gain.linearRampToValueAtTime(0.07,now+0.018);
-g2.gain.exponentialRampToValueAtTime(0.001,now+0.3);
-o2.connect(g2);g2.connect(ctx.destination);o2.start(now);o2.stop(now+0.34);
-}catch(e){}}
+var _dropBuf=null;
+function _loadDrop(){
+  if(_dropBuf||_dropBuf===false)return;
+  _dropBuf=false;
+  try{
+    if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();
+    fetch('water-drop.mp3').then(function(r){return r.arrayBuffer();}).then(function(ab){
+      dropACtx.decodeAudioData(ab,function(buf){_dropBuf=buf;});
+    }).catch(function(){});
+  }catch(e){}
+}
+function playDrop(){
+  try{
+    if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(dropACtx.state==='suspended')dropACtx.resume();
+    _loadDrop();
+    if(_dropBuf){
+      var src=dropACtx.createBufferSource(),g=dropACtx.createGain();
+      src.buffer=_dropBuf;g.gain.value=0.7;
+      src.connect(g);g.connect(dropACtx.destination);src.start();
+    }
+  }catch(e){}
+}
 function playBtn(){try{if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();var ctx=dropACtx,now=ctx.currentTime;
 // Very soft low thump — barely-there, warm, never intrudes
 // Single pure sine, slow attack, low volume, 80ms total
