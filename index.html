@@ -1171,48 +1171,52 @@ function stepW(){for(var y=1;y<rows-1;y++)for(var x=1;x<cols-1;x++){var i=y*cols
 function renderW(){var id=wctx.createImageData(W,H),d=id.data,cw=W/cols,ch=H/rows;for(var py=0;py<H;py++)for(var px=0;px<W;px++){var i=(py*W+px)*4,t=py/H;d[i]=Math.floor(6+t*8);d[i+1]=Math.floor(9+t*16);d[i+2]=Math.floor(16+t*26);d[i+3]=255;}for(var y=1;y<rows-1;y++)for(var x=1;x<cols-1;x++){var h=prev[y*cols+x];if(Math.abs(h)<.008)continue;var nx2=prev[y*cols+(x+1)]-prev[y*cols+(x-1)],ny2=prev[(y+1)*cols+x]-prev[(y-1)*cols+x],sx=Math.floor(x*cw+nx2*16),sy=Math.floor(y*ch+ny2*16),px0=Math.floor(x*cw),py0=Math.floor(y*ch);if(sx<0||sx>=W||sy<0||sy>=H||px0<0||px0>=W||py0<0||py0>=H)continue;var si=(Math.min(Math.max(sy,0),H-1)*W+Math.min(Math.max(sx,0),W-1))*4,di=(py0*W+px0)*4,li=Math.max(0,Math.min(1,(h+60)/120)),sp=Math.pow(Math.max(0,nx2*.7+ny2*.7),2.5);d[di]=Math.min(255,d[si]+li*20+sp*80+h*.5);d[di+1]=Math.min(255,d[si+1]+li*35+sp*105+h*.7);d[di+2]=Math.min(255,d[si+2]+li*52+sp*135+h*1.0);d[di+3]=255;}wctx.putImageData(id,0,0);var vg=wctx.createRadialGradient(W/2,H/2,W*.18,W/2,H/2,W*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.52)');wctx.fillStyle=vg;wctx.fillRect(0,0,W,H);}
 function wloop(){stepW();renderW();requestAnimationFrame(wloop);}
 function playDrop(){try{if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();var ctx=dropACtx,now=ctx.currentTime;
-// deep body — long soft sine sweep
+// Real water drop physics: a bubble forms and resonates.
+// Main body — falling tone from ~500Hz to ~110Hz (the collapsing bubble sweep)
 var o1=ctx.createOscillator(),g1=ctx.createGain();
-o1.type='sine';o1.frequency.setValueAtTime(260,now);o1.frequency.exponentialRampToValueAtTime(72,now+0.9);
-g1.gain.setValueAtTime(0,now);g1.gain.linearRampToValueAtTime(0.13,now+0.018);g1.gain.exponentialRampToValueAtTime(0.001,now+0.9);
-o1.connect(g1);g1.connect(ctx.destination);o1.start(now);o1.stop(now+0.95);
-// shimmer harmonic — filtered softly
-var o2=ctx.createOscillator(),g2=ctx.createGain(),lp=ctx.createBiquadFilter();
-lp.type='lowpass';lp.frequency.value=680;lp.Q.value=0.7;
-o2.type='sine';o2.frequency.setValueAtTime(520,now);o2.frequency.exponentialRampToValueAtTime(145,now+0.55);
-g2.gain.setValueAtTime(0,now);g2.gain.linearRampToValueAtTime(0.052,now+0.012);g2.gain.exponentialRampToValueAtTime(0.001,now+0.55);
-o2.connect(lp);lp.connect(g2);g2.connect(ctx.destination);o2.start(now);o2.stop(now+0.6);
-// water-surface texture — tiny shaped noise burst
-var sz=Math.floor(ctx.sampleRate*0.07),buf=ctx.createBuffer(1,sz,ctx.sampleRate),dv=buf.getChannelData(0);
-for(var i=0;i<sz;i++)dv[i]=(Math.random()*2-1)*Math.pow(1-i/sz,3)*0.65;
+o1.type='sine';
+o1.frequency.setValueAtTime(500,now);
+o1.frequency.exponentialRampToValueAtTime(110,now+0.32);
+g1.gain.setValueAtTime(0,now);
+g1.gain.linearRampToValueAtTime(0.22,now+0.005);
+g1.gain.exponentialRampToValueAtTime(0.001,now+0.32);
+o1.connect(g1);g1.connect(ctx.destination);o1.start(now);o1.stop(now+0.36);
+// Sub resonance — the low hum of water
+var o2=ctx.createOscillator(),g2=ctx.createGain();
+o2.type='sine';
+o2.frequency.setValueAtTime(200,now+0.008);
+o2.frequency.exponentialRampToValueAtTime(70,now+0.26);
+g2.gain.setValueAtTime(0,now);
+g2.gain.linearRampToValueAtTime(0.10,now+0.014);
+g2.gain.exponentialRampToValueAtTime(0.001,now+0.26);
+o2.connect(g2);g2.connect(ctx.destination);o2.start(now);o2.stop(now+0.3);
+// Tiny impact plink — very brief, filtered around 2400Hz, gentle volume
+var sz=Math.floor(ctx.sampleRate*0.009),buf=ctx.createBuffer(1,sz,ctx.sampleRate),dv=buf.getChannelData(0);
+for(var i=0;i<sz;i++)dv[i]=(Math.random()*2-1)*Math.exp(-i/(sz*0.12));
 var ns=ctx.createBufferSource(),nf=ctx.createBiquadFilter(),ng=ctx.createGain();
-nf.type='bandpass';nf.frequency.value=880;nf.Q.value=1.6;
-ng.gain.setValueAtTime(0.035,now);ng.gain.exponentialRampToValueAtTime(0.001,now+0.07);
+nf.type='bandpass';nf.frequency.value=2400;nf.Q.value=4;
+ng.gain.value=0.09;
 ns.buffer=buf;ns.connect(nf);nf.connect(ng);ng.connect(ctx.destination);ns.start(now);
 }catch(e){}}
 function playBtn(){try{if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();var ctx=dropACtx,now=ctx.currentTime;
-// fundamental — warm resonant body
+// Calm click: stays below 600Hz, soft attack, 110ms total — like pressing a smooth pebble.
+// Fundamental — warm body
 var o1=ctx.createOscillator(),g1=ctx.createGain();
-o1.type='sine';o1.frequency.value=340;
-g1.gain.setValueAtTime(0,now);g1.gain.linearRampToValueAtTime(0.19,now+0.007);g1.gain.exponentialRampToValueAtTime(0.001,now+0.65);
-o1.connect(g1);g1.connect(ctx.destination);o1.start(now);o1.stop(now+0.7);
-// 2nd harmonic — adds body
+o1.type='sine';
+o1.frequency.setValueAtTime(310,now);
+o1.frequency.linearRampToValueAtTime(240,now+0.11);
+g1.gain.setValueAtTime(0,now);
+g1.gain.linearRampToValueAtTime(0.16,now+0.006);
+g1.gain.exponentialRampToValueAtTime(0.001,now+0.11);
+o1.connect(g1);g1.connect(ctx.destination);o1.start(now);o1.stop(now+0.13);
+// Soft upper warmth — decays faster, adds presence without sharpness
 var o2=ctx.createOscillator(),g2=ctx.createGain();
-o2.type='sine';o2.frequency.value=680;
-g2.gain.setValueAtTime(0,now);g2.gain.linearRampToValueAtTime(0.095,now+0.005);g2.gain.exponentialRampToValueAtTime(0.001,now+0.42);
-o2.connect(g2);g2.connect(ctx.destination);o2.start(now);o2.stop(now+0.47);
-// 3rd harmonic — brightness
-var o3=ctx.createOscillator(),g3=ctx.createGain();
-o3.type='sine';o3.frequency.value=1020;
-g3.gain.setValueAtTime(0,now);g3.gain.linearRampToValueAtTime(0.044,now+0.004);g3.gain.exponentialRampToValueAtTime(0.001,now+0.26);
-o3.connect(g3);g3.connect(ctx.destination);o3.start(now);o3.stop(now+0.3);
-// strike transient — makes it feel physical and solid
-var sz2=Math.floor(ctx.sampleRate*0.022),buf2=ctx.createBuffer(1,sz2,ctx.sampleRate),dv2=buf2.getChannelData(0);
-for(var j=0;j<sz2;j++)dv2[j]=(Math.random()*2-1)*Math.pow(1-j/sz2,2)*0.45;
-var ns2=ctx.createBufferSource(),nf2=ctx.createBiquadFilter(),ng2=ctx.createGain();
-nf2.type='bandpass';nf2.frequency.value=1700;nf2.Q.value=1.1;
-ng2.gain.setValueAtTime(0.05,now);ng2.gain.exponentialRampToValueAtTime(0.001,now+0.022);
-ns2.buffer=buf2;ns2.connect(nf2);nf2.connect(ng2);ng2.connect(ctx.destination);ns2.start(now);
+o2.type='sine';
+o2.frequency.value=560;
+g2.gain.setValueAtTime(0,now);
+g2.gain.linearRampToValueAtTime(0.055,now+0.004);
+g2.gain.exponentialRampToValueAtTime(0.001,now+0.07);
+o2.connect(g2);g2.connect(ctx.destination);o2.start(now);o2.stop(now+0.08);
 }catch(e){}}
 hero.addEventListener('click',function(e){var r=hero.getBoundingClientRect();drop(e.clientX-r.left,e.clientY-r.top,88);playDrop();if(!moodShown){moodShown=true;clearTimeout(autoT);$('hc').classList.add('gone');setTimeout(function(){$('mw').classList.add('up');},300);}});
 hero.addEventListener('mousemove',function(e){if(!moodShown)return;var r=hero.getBoundingClientRect();drop(e.clientX-r.left,e.clientY-r.top,5);});
