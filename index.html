@@ -1193,18 +1193,29 @@ function playDrop(){
     }
   }catch(e){}
 }
-function playBtn(){try{if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();var ctx=dropACtx,now=ctx.currentTime;
-// Very soft low thump — barely-there, warm, never intrudes
-// Single pure sine, slow attack, low volume, 80ms total
-var o=ctx.createOscillator(),g=ctx.createGain();
-o.type='sine';
-o.frequency.setValueAtTime(300,now);
-o.frequency.linearRampToValueAtTime(230,now+0.08);
-g.gain.setValueAtTime(0,now);
-g.gain.linearRampToValueAtTime(0.055,now+0.018);
-g.gain.exponentialRampToValueAtTime(0.001,now+0.08);
-o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.09);
-}catch(e){}}
+var _btnBuf=null;
+function _loadBtn(){
+  if(_btnBuf||_btnBuf===false)return;
+  _btnBuf=false;
+  try{
+    if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();
+    fetch('btn-click.mp3').then(function(r){return r.arrayBuffer();}).then(function(ab){
+      dropACtx.decodeAudioData(ab,function(buf){_btnBuf=buf;});
+    }).catch(function(){});
+  }catch(e){}
+}
+function playBtn(){
+  try{
+    if(!dropACtx)dropACtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(dropACtx.state==='suspended')dropACtx.resume();
+    _loadBtn();
+    if(_btnBuf){
+      var src=dropACtx.createBufferSource(),g=dropACtx.createGain();
+      src.buffer=_btnBuf;g.gain.value=0.7;
+      src.connect(g);g.connect(dropACtx.destination);src.start();
+    }
+  }catch(e){}
+}
 hero.addEventListener('click',function(e){var r=hero.getBoundingClientRect();drop(e.clientX-r.left,e.clientY-r.top,88);playDrop();if(!moodShown){moodShown=true;clearTimeout(autoT);$('hc').classList.add('gone');setTimeout(function(){$('mw').classList.add('up');},300);}});
 hero.addEventListener('mousemove',function(e){if(!moodShown)return;var r=hero.getBoundingClientRect();drop(e.clientX-r.left,e.clientY-r.top,5);});
 function autoRipple(){if(moodShown)return;drop(W*(.3+Math.random()*.4),H*(.35+Math.random()*.3),16+Math.random()*10);autoT=setTimeout(autoRipple,1600+Math.random()*1200);}
